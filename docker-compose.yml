@@ -1,0 +1,8 @@
+services:
+  backend-service:
+    image: 'weather_request'
+    build: .
+    environment:
+      - database_url=database_url
+    ports:
+      - "8000:8000"
