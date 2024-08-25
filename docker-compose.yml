@@ -3,6 +3,6 @@ services:
     image: 'weather_request'
     build: .
     environment:
-      - database_url=database_url
+      - open_weather_api_key=$open_weather_api_key
     ports:
       - "8000:8000"
