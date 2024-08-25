@@ -8,13 +8,14 @@ from backend.settings import settings
 from managers.weather import WeatherManager
 from services.limiter import RequestLimiter
 
+
 class WeatherService:
-    def __init__(self, session: AsyncSession, user_id: int):
+    def __init__(self, session: AsyncSession, user_id: int, request_limiter=None, cities=None):
         self.session = session
         self.user_id = user_id
         self.weather_manager = WeatherManager(session=self.session)
-        self.rate_limiter = RequestLimiter(max_requests_per_period=2, period=5)
-        self.cities = constants.CITIES_IDs
+        self.request_limiter = request_limiter or RequestLimiter
+        self.cities = cities or constants.CITIES_IDs
 
     async def _fetch_weather(self, city_id: int, client: httpx.AsyncClient):
         payload = {
@@ -34,10 +35,9 @@ class WeatherService:
         await self.weather_manager.save_city_weather(self.user_id, data=data)
         return data
 
-
-    async def get(self):
+    async def get_openweather_data(self):
         async with httpx.AsyncClient() as client:
             # Process the list of cities
-            tasks = [await self.rate_limiter.fetch_with_rate_limit(self._fetch_weather, city, client) for city in self.cities]
+            tasks = [await self.request_limiter.fetch_with_rate_limit(self._fetch_weather, city, client) for city in self.cities]
             results = await asyncio.gather(*[])
         return results

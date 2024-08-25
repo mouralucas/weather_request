@@ -18,6 +18,7 @@ router = APIRouter(prefix='/weather', tags=['Weather'])
 
 class RequestData(BaseModel):
     user_id: int = Field(..., alias='user_id')
+    cities: list[int] | None = Field(None, alias='cities')
 
 
 class ResponseData(BaseModel):
@@ -37,8 +38,8 @@ async def weather(
         raise HTTPException(status.HTTP_409_CONFLICT, detail='User already request weather data')
 
     # Run the request in de background because it takes a long time to complete
-    service = WeatherService(session=session, user_id=request.user_id)
-    background_tasks.add_task(service.get)
+    service = WeatherService(session=session, user_id=request.user_id, cities=request.cities)
+    background_tasks.add_task(service.get_openweather_data)
 
     response = ResponseData(
         title='Collecting weather data',
@@ -49,7 +50,7 @@ async def weather(
 
 
 @router.get('', summary='', description='')
-async def get(
+async def get_weather(
         request: RequestData = Depends(),
         session: AsyncSession = Depends(db_session)
 ):
