@@ -21,16 +21,32 @@ def event_loop(request):
 
 @pytest_asyncio.fixture
 async def create_data_in_database(create_test_session):
+    # Add mock data to the database for the user_id=1
+    data_list = []
     user_id = 1
     data = {
         'city_id': 12345,
         'temp_c': 35,
         'humidity': 48
     }
-    await WeatherManager(create_test_session).save_city_weather(user_id, data)
+    data_1 = await WeatherManager(create_test_session).save_city_weather(user_id, data)
+
+    data = {
+        'city_id': 12345,
+        'temp_c': 24,
+        'humidity': 76
+    }
+    data_2 = await WeatherManager(create_test_session).save_city_weather(user_id, data)
+
+    data_list.append(data_1)
+    data_list.append(data_2)
+
+    return data_list
+
 
 @pytest_asyncio.fixture(scope='function')
 async def create_test_session():
+    # Create a new database session for tests
     async with test_sessionmanager.connect() as connection:
         await connection.run_sync(Base.metadata.drop_all)
         await connection.run_sync(Base.metadata.create_all)
@@ -41,14 +57,12 @@ async def create_test_session():
 
 @pytest_asyncio.fixture(scope='function', autouse=True)
 def override_db_session(create_test_session):
-    """
-    Overrides the database session, in this case using test_sessionmanager.
-    In session end it rolls back all database operations.
-    """
+    # Overrides the database session, in this case using test_sessionmanager.
     app.dependency_overrides[db_session] = lambda: create_test_session
 
 
 @pytest_asyncio.fixture(scope='function', autouse=True)
 async def client():
+    # Create the test client for all tests
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client

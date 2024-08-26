@@ -38,6 +38,16 @@ class WeatherService:
     async def get_openweather_data(self):
         async with httpx.AsyncClient() as client:
             # Process the list of cities
-            tasks = [await self.request_limiter.fetch_with_rate_limit(self._fetch_weather, city, client) for city in self.cities]
+            tasks = [await self.request_limiter.call_external_api(self._fetch_weather, city, client) for city in self.cities]
             results = await asyncio.gather(*[])
         return results
+
+    async def get_percentage(self) -> float:
+        # Get the list of processed cities
+        processed_cities = await WeatherManager(session=self.session).get_complete_cities(self.user_id)
+
+        # Calculate the percentage of processed cities
+        qtd_processed = len(processed_cities) if processed_cities else 0
+        completion_percent = (qtd_processed / len(self.cities)) * 100
+
+        return completion_percent

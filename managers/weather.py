@@ -24,7 +24,7 @@ class WeatherManager:
 
         return True if result else False
 
-    async def save_city_weather(self, user_id: int, data: dict[str, Any]) -> None:
+    async def save_city_weather(self, user_id: int, data: dict[str, Any]):
         """
         This functions saves the weather data to the database
         """
@@ -32,6 +32,8 @@ class WeatherManager:
         self.session.add(weather)
         await self.session.commit()
         await self.session.refresh(weather)
+
+        return weather
 
     async def get_complete_cities(self, user_id: int):
         """
@@ -42,7 +44,4 @@ class WeatherManager:
         processed = await self.session.scalars(select_stmt)
         processed = processed.all()
 
-        qtd_processed = len(processed) if processed else 0
-        completion_percent = (qtd_processed / len(constants.CITIES_IDs)) * 100
-
-        return completion_percent
+        return processed

@@ -1,8 +1,13 @@
 # Project to fetch weather data for cities
 
+This code was developed using FastAPI because it is a simple framework to build async requests, 
+and it's easy to handle the data.
+
+
+
 ## Running the project in Linux
 
-Export the environment variable for the Open Weather API 
+Export the environment variable for the Open Weather API and then run docker commands. 
 This commands must be executed in the same terminal
 
 ```bash
@@ -41,3 +46,23 @@ Required query param: user_id
 
 This will return the completion percentage for the user
 
+## Testing
+
+Create the virtual environment and activate it:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+Install dependencies
+```bash
+pip3 install -r requirements.txt
+```
+
+Run the pytest
+
+```bash
+pytest
+```
+
+It may take some time due to request restriction per period!

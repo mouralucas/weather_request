@@ -9,6 +9,7 @@ from models.weather import Base
 
 
 class DatabaseSessionManager:
+    # Create all necessary handlers for database connection
     def __init__(self, host: str, engine_kwargs: dict[str, Any] = {}, expire_on_commit: bool = True, test_db=False):
         self._engine = create_async_engine(host, **engine_kwargs)
         self._sessionmaker = async_sessionmaker(autocommit=False, bind=self._engine, expire_on_commit=expire_on_commit)

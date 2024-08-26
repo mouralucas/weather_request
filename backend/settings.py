@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     # Weather API
     open_weather_url: str = 'https://api.openweathermap.org/data/2.5/weather'
-    open_weather_api_key: str = ''
+    open_weather_api_key: str = '' # This value must be in an env variable
     open_weather_rate_limit: int = 1
     open_weather_rate_limit_period: int = 60  # in seconds
 

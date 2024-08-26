@@ -10,7 +10,7 @@ from services.limiter import RequestLimiter
 
 
 @pytest.mark.asyncio
-async def test_get_weather_with_rate_limit(create_test_session):
+async def test_get_openweather_data(create_test_session):
     # Mocking the OpenWeather API response
     async def mock_get(url, params=None):
         class MockResponse:
@@ -56,6 +56,20 @@ async def test_get_weather_with_rate_limit(create_test_session):
 
 
 @pytest.mark.asyncio
+async def test_get_percentage(create_test_session, create_data_in_database):
+    user_id = 1
+    session = create_test_session # use mocked session
+    data_processed = create_data_in_database # create mack data
+    cities = constants.CITIES_IDs_SHORT  # use the short list in tests
+    weather_service = WeatherService(session=session, user_id=user_id, cities=cities)
+
+    response = await weather_service.get_percentage()
+
+    assert type(response) is float
+    assert len(data_processed) / len(cities) * 100 == response
+
+
+@pytest.mark.asyncio
 async def test_weather_endpoint_user_already_exists(client, create_data_in_database):
     """
         The rule is that user_id must be unique for each request, that means if the id exists in table
@@ -72,25 +86,6 @@ async def test_weather_endpoint_user_already_exists(client, create_data_in_datab
 
 @pytest.mark.asyncio
 async def test_weather_endpoint_new_user(client):
-    user_id = 1
-
-    payload = {
-        'user_id': user_id,
-        'cities': constants.CITIES_IDs_SHORT,
-    }
-    response = await client.post("/weather", json=payload)
-
-    assert response.status_code == status.HTTP_202_ACCEPTED
-    assert response.json() == {
-        "title": "Collecting weather data",
-        "message": "The system are already collecting weather data for the requested user."
-                   "You can check the percentage of completion using the get endpoint /weather?user_id={user_id}".format(user_id=user_id),
-    }
-
-
-@pytest.mark.asyncio
-async def test_get_endpoint(client, create_test_session):
-    # Mocking the OpenWeather API response
     async def mock_get(url, params=None):
         class MockResponse:
             def json(self):
@@ -115,19 +110,63 @@ async def test_get_endpoint(client, create_test_session):
         request_limiter = RequestLimiter
         max_limit = 2
         request_limiter.MAX_REQUESTS_PER_PERIOD = max_limit
-        request_limiter.PERIOD = 15
+        request_limiter.PERIOD = 11
+        request_limiter.REQUEST_QUEUE = deque(maxlen=max_limit)
+
+        user_id = 456
+
+        payload = {
+            'user_id': user_id,
+            'cities': constants.CITIES_IDs_SHORT,  # Pass a short list of cities in test
+        }
+        response = await client.post("/weather", json=payload)
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert response.json() == {
+            "title": "Collecting weather data",
+            "message": "The system are already collecting weather data for the requested user."
+                       "You can check the percentage of completion using the get endpoint /weather?user_id={user_id}".format(user_id=user_id),
+        }
+
+
+@pytest.mark.asyncio
+async def test_get_endpoint(client, create_test_session):
+    # Mocking the OpenWeather API response
+    async def mock_get(url, params=None):
+        class MockResponse:
+            def json(self):
+                return {
+                    'id': "31",
+                    'main': {
+                        'temp': 35,
+                        'humidity': 65
+                    }
+                }
+
+        return MockResponse()
+
+    # Use patch as a synchronous context manager and mock AsyncClient.get method
+    with patch('httpx.AsyncClient.get', new_callable=AsyncMock) as mock_get_method:
+        mock_get_method.side_effect = mock_get  # Assign the async mock response to the mocked method
+
+        # Override the limiter to test faster
+        request_limiter = RequestLimiter
+        max_limit = 2
+        request_limiter.MAX_REQUESTS_PER_PERIOD = max_limit
+        request_limiter.PERIOD = 10
         request_limiter.REQUEST_QUEUE = deque(maxlen=max_limit)
 
         user_id = 123
 
         payload = {
             'user_id': user_id,
-            'cities': constants.CITIES_IDs_SHORT, # Pass a short list of cities in test
+            'cities': constants.CITIES_IDs_SHORT,  # Pass a short list of cities in test
         }
         response = await client.post("/weather", json=payload)
         assert response.status_code == status.HTTP_202_ACCEPTED
 
-
     # The get endpoint do not need to mock the get call to OpenWeather
     response = await client.get("/weather", params={'user_id': user_id})
     assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert 'percentage' in data

@@ -1,3 +1,4 @@
+# Create a backend service to start the server in port 8000
 services:
   backend-service:
     image: 'weather_request'

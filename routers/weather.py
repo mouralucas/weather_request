@@ -26,6 +26,10 @@ class ResponseData(BaseModel):
     message: str = Field(..., alias='message', description='The complete description of the response')
 
 
+class ResponsePercentage(BaseModel):
+    percentage: float = Field(..., alias='percentage', description='Percentage of processed cities')
+
+
 @router.post('', summary='', description='', status_code=status.HTTP_202_ACCEPTED)
 async def weather(
         request: RequestData,
@@ -41,12 +45,11 @@ async def weather(
     service = WeatherService(session=session, user_id=request.user_id, cities=request.cities)
     background_tasks.add_task(service.get_openweather_data)
 
-    response = ResponseData(
+    return ResponseData(
         title='Collecting weather data',
         message='The system are already collecting weather data for the requested user.'
                 'You can check the percentage of completion using the get endpoint /weather?user_id={user_id}'.format(user_id=request.user_id),
     )
-    return response
 
 
 @router.get('', summary='', description='')
@@ -55,6 +58,8 @@ async def get_weather(
         session: AsyncSession = Depends(db_session)
 ):
     # Get the percentage of processed cities
-    percentage = await WeatherManager(session=session).get_complete_cities(user_id=request.user_id)
+    percentage = await WeatherService(session=session, user_id=request.user_id).get_percentage()
 
-    return {'percentage': percentage}
+    return ResponsePercentage(
+        percentage=percentage
+    )

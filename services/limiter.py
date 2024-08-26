@@ -20,7 +20,7 @@ class RequestLimiter:
         RequestLimiter.REQUEST_QUEUE.append(time.time())
 
     @staticmethod
-    async def fetch_with_rate_limit(fn, *args, **kwargs):
+    async def call_external_api(fn, *args, **kwargs):
         try:
             # Before execute the function check if the process have a free slot
             # Uses await so maintains the loop free to other actions
