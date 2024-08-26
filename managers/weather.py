@@ -3,7 +3,6 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import constants
 from models.weather import WeatherData
 
 

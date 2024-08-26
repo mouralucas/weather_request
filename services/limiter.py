@@ -1,6 +1,6 @@
-import time
-from collections import deque, defaultdict
 import asyncio
+import time
+from collections import deque
 
 
 class RequestLimiter:

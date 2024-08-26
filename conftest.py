@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 
 import pytest
 import pytest_asyncio
@@ -9,7 +8,8 @@ from backend.database import db_session
 from backend.database import test_sessionmanager
 from main import app
 from managers.weather import WeatherManager
-from models.weather import Base, WeatherData
+from models.weather import Base
+
 
 # Basic configuration to run the tests, with data and Session mocks
 

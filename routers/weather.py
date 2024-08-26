@@ -1,15 +1,9 @@
-import asyncio
-
-import httpx
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
-from ratelimit import sleep_and_retry, limits
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-import constants
 from backend.database import db_session
-from backend.settings import settings
 from managers.weather import WeatherManager
 from services.weather import WeatherService
 
